@@ -2709,3 +2709,25 @@ def test_create_recipe_slug_length_validation(api_client: TestClient, unique_use
 
     response = api_client.get(api_routes.recipes_slug(created_slug), headers=unique_user.token)
     assert response.status_code == 200
+
+
+def test_recipe_list_returns_ingredient_count(api_client: TestClient, unique_user: TestUser):
+    with_ingredients = api_client.post(api_routes.recipes, json={"name": random_string()}, headers=unique_user.token)
+    without_ingredients = api_client.post(api_routes.recipes, json={"name": random_string()}, headers=unique_user.token)
+    assert with_ingredients.status_code == 201
+    assert without_ingredients.status_code == 201
+
+    ingredients = [{"note": "flour"}, {"title": "For the sauce", "note": "tomatoes"}, {"title": "To serve"}]
+    patched = api_client.patch(
+        api_routes.recipes_slug(with_ingredients.json()),
+        json={"recipeIngredient": ingredients},
+        headers=unique_user.token,
+    )
+    assert patched.status_code == 200
+
+    response = api_client.get(api_routes.recipes, params={"perPage": -1}, headers=unique_user.token)
+    assert response.status_code == 200
+    counts = {item["slug"]: item.get("ingredientCount") for item in response.json()["items"]}
+
+    assert counts[with_ingredients.json()] == 2
+    assert counts[without_ingredients.json()] == 0

@@ -64,6 +64,12 @@
               </p>
             </v-list-item-subtitle>
             <div
+              v-if="ingredientCount > 0"
+              class="recipe-card-ingredient-count text-caption pt-1"
+            >
+              {{ $t("recipe.ingredient-count", { count: ingredientCount }, ingredientCount) }}
+            </div>
+            <div
               class="d-flex flex-nowrap justify-start ma-0 pt-2 pb-0"
               style="overflow-x: hidden; overflow-y: hidden; white-space: nowrap; min-height: 38px;"
             >
@@ -149,6 +155,7 @@ interface Props {
   rating?: number;
   image?: string;
   tags?: Array<any>;
+  ingredientCount?: number;
   recipeId: string;
   vertical?: boolean;
   isFlat?: boolean;
@@ -162,6 +169,7 @@ const props = withDefaults(defineProps<Props>(), {
   rating: 0,
   image: undefined,
   tags: () => [],
+  ingredientCount: 0,
   vertical: false,
   isFlat: false,
   height: 150,

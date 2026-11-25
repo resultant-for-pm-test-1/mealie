@@ -268,6 +268,10 @@ class RecipeSummary(MealieOutModel):
     rating: float | None = None
     org_url: str | None = Field(None, alias="orgURL")
 
+    # Number of ingredient lines that are not only a section heading. List queries fill it in
+    # without loading the ingredients themselves.
+    ingredient_count: int = 0
+
     date_added: datetime.date | None = None
     date_updated: datetime.datetime | None = None
     created_at: datetime.datetime | None = None
@@ -369,6 +373,24 @@ class RecipeOut(RecipeSummary):
     @field_validator("settings", mode="before")
     def default_settings(cls, v):
         return v if v is not None else RecipeSettings()
+
+    @model_validator(mode="after")
+    def count_real_ingredients(self) -> RecipeOut:
+        # The list query counts these in the database (RepositoryRecipes._count_real_ingredients); a full recipe
+        # already holds its ingredients, so the inherited field is derived from them to stay consistent.
+        self.ingredient_count = sum(
+            1
+            for line in self.recipe_ingredient
+            if not (
+                line.title
+                and not line.note
+                and not line.food
+                and not line.unit
+                and not line.quantity
+                and not line.referenced_recipe
+            )
+        )
+        return self
 
     @classmethod
     def loader_options(cls) -> list[LoaderOption]:

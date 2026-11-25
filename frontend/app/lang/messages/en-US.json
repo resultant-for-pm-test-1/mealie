@@ -514,6 +514,7 @@
     "fiber-content": "Fiber",
     "grams": "grams",
     "ingredient": "Ingredient",
+    "ingredient-count": "{count} ingredient | {count} ingredients",
     "ingredients": "Ingredients",
     "insert-above": "Insert Above",
     "insert-below": "Insert Below",
