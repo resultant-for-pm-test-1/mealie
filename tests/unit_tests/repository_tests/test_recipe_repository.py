@@ -1122,3 +1122,52 @@ def test_recipe_repo_count_all(
     assert unfiltered_database.recipes.count_all("group_id", UUID(group_id)) == 2
     assert unfiltered_database.recipes.count_all("household_id", UUID(household_id)) == 2
     assert unfiltered_database.recipes.count_all("household_id", uuid4()) == 0
+
+
+def _listed_ingredient_counts(user: TestUser, drafts: list[RecipeDraft]) -> list[int | None]:
+    created = [user.repos.recipes.create(draft) for draft in drafts]
+    listed = {item.id: item for item in user.repos.recipes.page_all(PaginationQuery(page=1, per_page=-1)).items}
+    return [getattr(listed[recipe.id], "ingredient_count", None) for recipe in created]
+
+
+def test_recipe_list_counts_only_real_ingredient_lines(unique_user: TestUser) -> None:
+    group_id, user_id = unique_user.group_id, unique_user.user_id
+    drafts = [
+        RecipeDraft(
+            name=random_string(),
+            group_id=group_id,
+            user_id=user_id,
+            recipe_ingredient=[
+                RecipeIngredient(note="flour"),
+                RecipeIngredient(note="eggs"),
+                RecipeIngredient(note="milk"),
+            ],
+        ),
+        RecipeDraft(
+            name=random_string(),
+            group_id=group_id,
+            user_id=user_id,
+            recipe_ingredient=[
+                RecipeIngredient(title="For the sauce", note="tomatoes"),
+                RecipeIngredient(note="basil"),
+                RecipeIngredient(title="To serve"),
+            ],
+        ),
+    ]
+
+    assert _listed_ingredient_counts(unique_user, drafts) == [3, 2]
+
+
+def test_recipe_list_counts_zero_without_real_ingredients(unique_user: TestUser) -> None:
+    group_id, user_id = unique_user.group_id, unique_user.user_id
+    drafts = [
+        RecipeDraft(name=random_string(), group_id=group_id, user_id=user_id),
+        RecipeDraft(
+            name=random_string(),
+            group_id=group_id,
+            user_id=user_id,
+            recipe_ingredient=[RecipeIngredient(title="For the sauce"), RecipeIngredient(title="To serve")],
+        ),
+    ]
+
+    assert _listed_ingredient_counts(unique_user, drafts) == [0, 0]
