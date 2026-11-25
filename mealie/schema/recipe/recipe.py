@@ -268,6 +268,10 @@ class RecipeSummary(MealieOutModel):
     rating: float | None = None
     org_url: str | None = Field(None, alias="orgURL")
 
+    # Number of ingredient lines that are not only a section heading. List queries fill it in
+    # without loading the ingredients themselves.
+    ingredient_count: int = 0
+
     date_added: datetime.date | None = None
     date_updated: datetime.datetime | None = None
     created_at: datetime.datetime | None = None

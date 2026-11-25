@@ -364,6 +364,33 @@ class RepositoryRecipes(RecipeSuggestionMixin, HouseholdRepositoryGeneric[Recipe
         self.session.commit()
         return self.schema.model_validate(entry)
 
+    def _count_real_ingredients(self, recipe_ids: list[UUID4]) -> dict[UUID4, int]:
+        """
+        Count each recipe's ingredient lines that are not only a section heading.
+
+        A line is only a section heading when it has a title and nothing else: no note, food, unit,
+        quantity (a missing quantity is stored as either NULL or 0) or referenced recipe. One grouped
+        query counts the whole page, so the ingredient rows are never loaded.
+        """
+        if not recipe_ids:
+            return {}
+
+        ingredient = RecipeIngredientModel
+        heading_only = sa.and_(
+            sa.func.coalesce(ingredient.title, "") != "",
+            sa.func.coalesce(ingredient.note, "") == "",
+            ingredient.food_id.is_(None),
+            ingredient.unit_id.is_(None),
+            sa.func.coalesce(ingredient.quantity, 0) == 0,
+            ingredient.referenced_recipe_id.is_(None),
+        )
+        query = (
+            sa.select(ingredient.recipe_id, sa.func.count(ingredient.id))
+            .where(ingredient.recipe_id.in_(recipe_ids), sa.not_(heading_only))
+            .group_by(ingredient.recipe_id)
+        )
+        return {recipe_id: count for recipe_id, count in self.session.execute(query).all()}
+
     def page_all(  # type: ignore
         self,
         pagination: PaginationQuery,
@@ -440,6 +467,10 @@ class RepositoryRecipes(RecipeSuggestionMixin, HouseholdRepositoryGeneric[Recipe
             raise e
 
         items = [RecipeSummary.model_validate(item) for item in data]
+        ingredient_counts = self._count_real_ingredients([item.id for item in items])
+        for item in items:
+            item.ingredient_count = ingredient_counts.get(item.id, 0)
+
         return RecipePagination(
             page=pagination_result.page,
             per_page=pagination_result.per_page,

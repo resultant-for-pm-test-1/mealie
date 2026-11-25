@@ -131,6 +131,7 @@
               :rating="recipe.rating!"
               :image="recipe.image!"
               :tags="recipe.tags"
+              :ingredient-count="recipe.ingredientCount"
               :recipe-id="recipe.id"
               @item-selected="(item, urlPrefix) => emit('itemSelected', item, urlPrefix)"
             />
@@ -156,6 +157,7 @@
               :rating="recipe.rating!"
               :image="recipe.image!"
               :tags="recipe.tags"
+              :ingredient-count="recipe.ingredientCount"
               :recipe-id="recipe.id"
               @item-selected="(item, urlPrefix) => emit('itemSelected', item, urlPrefix)"
             />

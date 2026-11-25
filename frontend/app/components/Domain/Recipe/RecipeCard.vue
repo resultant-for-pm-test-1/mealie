@@ -39,6 +39,12 @@
         <v-card-title class="px-4" style="font-size: 1.25rem;">
           {{ name }}
         </v-card-title>
+        <div
+          v-if="ingredientCount > 0"
+          class="recipe-card-ingredient-count text-caption px-4"
+        >
+          {{ $t("recipe.ingredient-count", { count: ingredientCount }, ingredientCount) }}
+        </div>
 
         <div class="recipe-card-footer">
           <RecipeChips
@@ -117,6 +123,7 @@ interface Props {
   ratingColor?: string;
   image?: string;
   tags?: Array<any>;
+  ingredientCount?: number;
   recipeId: string;
   imageHeight?: number;
 }
@@ -126,6 +133,7 @@ const props = withDefaults(defineProps<Props>(), {
   ratingColor: "secondary",
   image: undefined,
   tags: () => [],
+  ingredientCount: 0,
   imageHeight: 200,
 });
 
