@@ -389,7 +389,7 @@ class RepositoryRecipes(RecipeSuggestionMixin, HouseholdRepositoryGeneric[Recipe
             .where(ingredient.recipe_id.in_(recipe_ids), sa.not_(heading_only))
             .group_by(ingredient.recipe_id)
         )
-        return dict(self.session.execute(query).tuples().all())
+        return {row[0]: row[1] for row in self.session.execute(query).all()}
 
     def page_all(  # type: ignore
         self,
