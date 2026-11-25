@@ -2709,3 +2709,109 @@ def test_create_recipe_slug_length_validation(api_client: TestClient, unique_use
 
     response = api_client.get(api_routes.recipes_slug(created_slug), headers=unique_user.token)
     assert response.status_code == 200
+
+
+def _import_recipe_from_url(api_client: TestClient, unique_user: TestUser, monkeypatch: MonkeyPatch, url: str) -> dict:
+    """Import a recipe through the create-from-URL route with every network call stubbed, and return it as read."""
+    recipe_data = recipe_test_data[0]
+
+    async def mock_resilient_fetch(url: str) -> FetchResult:
+        return FetchResult(b"<html></html>", 200, url, Headers(), "utf-8")
+
+    async def return_empty_response(*args, **kwargs):
+        return Response(200, content=b"")
+
+    monkeypatch.setattr(recipe_scraper_module, "resilient_fetch", mock_resilient_fetch)
+    for scraper_cls in DEFAULT_SCRAPER_STRATEGIES:
+        monkeypatch.setattr(scraper_cls, "get_html", open_graph_override(recipe_data.html_file.read_text()))
+    monkeypatch.setattr(AsyncSafeTransport, "handle_async_request", return_empty_response)
+    monkeypatch.setattr(RecipeDataService, "scrape_image", lambda *_: "TEST_IMAGE")
+
+    response = api_client.post(api_routes.recipes_create_url, json={"url": url}, headers=unique_user.token)
+    assert response.status_code == 201
+
+    response = api_client.get(api_routes.recipes_slug(json.loads(response.text)), headers=unique_user.token)
+    assert response.status_code == 200
+    return json.loads(response.text)
+
+
+def test_hand_made_recipe_has_null_site_name(api_client: TestClient, unique_user: TestUser):
+    response = api_client.post(api_routes.recipes, json={"name": random_string()}, headers=unique_user.token)
+    assert response.status_code == 201
+
+    response = api_client.get(api_routes.recipes_slug(json.loads(response.text)), headers=unique_user.token)
+    assert response.status_code == 200
+
+    recipe = json.loads(response.text)
+    assert "siteName" in recipe
+    assert recipe["siteName"] is None
+
+
+def test_imported_recipe_returns_its_site_name(api_client: TestClient, unique_user: TestUser, monkeypatch: MonkeyPatch):
+    cases = {
+        "https://www.allrecipes.com/recipe/123": "allrecipes.com",
+        "https://example.org/r/1": "example.org",
+        "HTTPS://Example.COM/Recipe": "example.com",
+        "https://user:pass@www.allrecipes.com/recipe/123": "allrecipes.com",
+    }
+
+    for url, expected_site_name in cases.items():
+        recipe = _import_recipe_from_url(api_client, unique_user, monkeypatch, url)
+
+        assert recipe.get("siteName") == expected_site_name, url
+        assert "pass" not in json.dumps(recipe), url
+
+        api_client.delete(api_routes.recipes_slug(recipe["slug"]), headers=unique_user.token)
+
+
+def test_update_without_site_name_keeps_it(api_client: TestClient, unique_user: TestUser, monkeypatch: MonkeyPatch):
+    recipe = _import_recipe_from_url(api_client, unique_user, monkeypatch, "https://www.allrecipes.com/recipe/123")
+    assert recipe.get("siteName") == "allrecipes.com"
+
+    recipe_url = api_routes.recipes_slug(recipe["slug"])
+    body = {key: value for key, value in recipe.items() if key != "siteName"}
+    body["description"] = "A new description"
+
+    response = api_client.put(recipe_url, json=utils.jsonify(body), headers=unique_user.token)
+    assert response.status_code == 200
+
+    updated = json.loads(api_client.get(recipe_url, headers=unique_user.token).text)
+    assert updated["description"] == "A new description"
+    assert updated.get("siteName") == "allrecipes.com"
+
+
+def test_update_echoing_site_name_and_patch_keep_it(
+    api_client: TestClient, unique_user: TestUser, monkeypatch: MonkeyPatch
+):
+    recipe = _import_recipe_from_url(api_client, unique_user, monkeypatch, "https://www.allrecipes.com/recipe/123")
+    assert recipe.get("siteName") == "allrecipes.com"
+
+    recipe_url = api_routes.recipes_slug(recipe["slug"])
+    recipe["description"] = "Edited and saved"
+
+    response = api_client.put(recipe_url, json=utils.jsonify(recipe), headers=unique_user.token)
+    assert response.status_code == 200
+    after_put = json.loads(api_client.get(recipe_url, headers=unique_user.token).text)
+    assert after_put.get("siteName") == "allrecipes.com"
+
+    response = api_client.patch(recipe_url, json={"description": "Patched"}, headers=unique_user.token)
+    assert response.status_code == 200
+    after_patch = json.loads(api_client.get(recipe_url, headers=unique_user.token).text)
+    assert after_patch["description"] == "Patched"
+    assert after_patch.get("siteName") == "allrecipes.com"
+
+
+def test_duplicate_carries_site_name(api_client: TestClient, unique_user: TestUser, monkeypatch: MonkeyPatch):
+    recipe = _import_recipe_from_url(api_client, unique_user, monkeypatch, "https://www.allrecipes.com/recipe/123")
+    assert recipe.get("siteName") == "allrecipes.com"
+
+    response = api_client.post(
+        api_routes.recipes_slug_duplicate(recipe["slug"]),
+        headers=unique_user.token,
+        json={"name": "Duplicate with site name"},
+    )
+    assert response.status_code == 201
+    duplicate = json.loads(response.text)
+
+    assert duplicate.get("siteName") == recipe.get("siteName")
+    assert duplicate.get("siteName") == "allrecipes.com"

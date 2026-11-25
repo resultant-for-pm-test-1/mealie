@@ -142,6 +142,7 @@ class RecipeModel(SqlAlchemyBase, BaseMixins):
     tags: Mapped[list[Tag]] = orm.relationship("Tag", secondary=recipes_to_tags, back_populates="recipes")
     notes: Mapped[list[Note]] = orm.relationship("Note", cascade="all, delete-orphan")
     org_url: FilterableColumn[str | None] = mapped_column(sa.String)
+    site_name: Mapped[str | None] = mapped_column(sa.String, nullable=True)
     extras: Mapped[list[ApiExtras]] = orm.relationship("ApiExtras", cascade="all, delete-orphan")
 
     # Time Stamp Properties
