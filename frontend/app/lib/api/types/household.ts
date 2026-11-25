@@ -725,6 +725,7 @@ export interface RecipeSummary {
   tools: ToolOut[];
   rating: number | null;
   orgURL: string | null;
+  ingredientCount: number;
   dateAdded: string | null;
   dateUpdated: string | null;
   createdAt: string | null;

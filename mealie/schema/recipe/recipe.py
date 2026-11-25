@@ -374,6 +374,24 @@ class RecipeOut(RecipeSummary):
     def default_settings(cls, v):
         return v if v is not None else RecipeSettings()
 
+    @model_validator(mode="after")
+    def count_real_ingredients(self) -> RecipeOut:
+        # The list query counts these in the database (RepositoryRecipes._count_real_ingredients); a full recipe
+        # already holds its ingredients, so the inherited field is derived from them to stay consistent.
+        self.ingredient_count = sum(
+            1
+            for line in self.recipe_ingredient
+            if not (
+                line.title
+                and not line.note
+                and not line.food
+                and not line.unit
+                and not line.quantity
+                and not line.referenced_recipe
+            )
+        )
+        return self
+
     @classmethod
     def loader_options(cls) -> list[LoaderOption]:
         return [
