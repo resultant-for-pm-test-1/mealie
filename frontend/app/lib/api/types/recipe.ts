@@ -91,6 +91,7 @@ export interface RecipeSummary {
   tools: ToolOut[];
   rating: number | null;
   orgURL: string | null;
+  siteName: string | null;
   dateAdded: string | null;
   dateUpdated: string | null;
   createdAt: string | null;
@@ -349,6 +350,7 @@ export interface RecipeDraft {
   tools?: ToolDraft[];
   rating?: number | null;
   orgURL?: string | null;
+  siteName?: string | null;
   dateAdded?: string | null;
   dateUpdated?: string | null;
   createdAt?: string | null;
@@ -468,6 +470,7 @@ export interface RecipeOut {
   tools: ToolOut[];
   rating: number | null;
   orgURL: string | null;
+  siteName: string | null;
   dateAdded: string | null;
   dateUpdated: string | null;
   createdAt: string | null;

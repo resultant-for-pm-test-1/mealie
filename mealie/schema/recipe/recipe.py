@@ -122,6 +122,7 @@ class RecipeDraft(MealieModel):
     tools: list[ToolDraft] = []
     rating: float | None = None
     org_url: str | None = Field(None, alias="orgURL")
+    site_name: str | None = None
 
     date_added: datetime.date | None = None
     date_updated: datetime.datetime | None = None
@@ -267,6 +268,7 @@ class RecipeSummary(MealieOutModel):
     tools: list[ToolOut] = []
     rating: float | None = None
     org_url: str | None = Field(None, alias="orgURL")
+    site_name: str | None = None
 
     date_added: datetime.date | None = None
     date_updated: datetime.datetime | None = None

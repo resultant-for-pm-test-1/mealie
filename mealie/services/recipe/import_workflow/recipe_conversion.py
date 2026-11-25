@@ -8,6 +8,7 @@ from mealie.schema.recipe.recipe_notes import RecipeNote
 from mealie.schema.recipe.recipe_nutrition import Nutrition
 from mealie.schema.recipe.recipe_step import RecipeStep
 from mealie.services.scraper import cleaner
+from mealie.services.scraper.site_name import derive_site_name, strip_url_credentials
 
 from .context import WorkflowContext
 
@@ -88,5 +89,6 @@ def to_recipe(ctx: WorkflowContext, openai_recipe: OpenAIRecipe) -> RecipeDraft:
         nutrition=convert_nutrition(openai_recipe),
         # uploaded images take precedence, and are attached to the recipe after it's created
         image=None if ctx.input.images else compiled and compiled.image_url,
-        org_url=ctx.input.url,
+        org_url=strip_url_credentials(ctx.input.url),
+        site_name=derive_site_name(ctx.input.url),
     )

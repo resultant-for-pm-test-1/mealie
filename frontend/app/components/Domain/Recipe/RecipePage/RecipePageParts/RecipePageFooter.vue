@@ -1,6 +1,13 @@
 <template>
   <div>
     <v-card-actions class="justify-end">
+      <span
+        v-if="recipe.siteName && !isEditForm"
+        data-testid="recipe-site-name"
+        class="text-caption text-medium-emphasis mr-3 text-break"
+      >
+        {{ $t("recipe.source-site", { site: recipe.siteName }) }}
+      </span>
       <v-text-field
         v-if="isEditForm"
         v-model="recipe.orgURL"

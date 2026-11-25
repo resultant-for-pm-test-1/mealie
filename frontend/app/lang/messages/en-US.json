@@ -524,6 +524,7 @@
     "nutrition": "Nutrition",
     "linked-ingredients": "Linked Ingredients",
     "original-url": "Original URL",
+    "source-site": "Source: {site}",
     "per-serving": "Per serving",
     "perform-time": "Cook Time",
     "prep-time": "Prep Time",
