@@ -1,5 +1,6 @@
 from collections.abc import Awaitable, Callable
 from enum import StrEnum
+from re import IGNORECASE
 from re import search as regex_search
 from uuid import uuid4
 
@@ -47,7 +48,7 @@ async def create_from_html(
     scraper = RecipeScraper(repos, translator)
 
     if not html:
-        extracted_url = regex_search(r"(https?://|www\.)[^\s]+", url)
+        extracted_url = regex_search(r"(https?://|www\.)[^\s]+", url, IGNORECASE)
         if not extracted_url:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, {"details": ParserErrors.BAD_RECIPE_DATA.value})
         url = extracted_url.group(0)

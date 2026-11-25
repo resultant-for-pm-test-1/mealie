@@ -673,6 +673,18 @@ class RecipeService(RecipeServiceBase):
 
         return update_data
 
+    @staticmethod
+    def _preserve_omitted_site_name(recipe: RecipeOut, update_data: RecipeDraft) -> RecipeDraft:
+        """Keeps the stored site name when the payload doesn't mention it.
+
+        Updates are a full overwrite, so a client that round-trips a recipe without echoing
+        `siteName` back would otherwise clear the name of the site the recipe was imported from.
+        """
+        if "site_name" not in update_data.model_fields_set:
+            update_data.site_name = recipe.site_name
+
+        return update_data
+
     def _remove_non_existent_ingredient_references(self, update_data: RecipeDraft) -> RecipeDraft:
         """Removes the references of ingredients from steps that no longer exist."""
 
@@ -732,6 +744,7 @@ class RecipeService(RecipeServiceBase):
             raise exceptions.MissingRequiredData("Recipe name is required")
 
         update_data = self._preserve_omitted_image(recipe, update_data)
+        update_data = self._preserve_omitted_site_name(recipe, update_data)
         update_data = self._remove_non_existent_ingredient_references(update_data)
         update_data = self._remove_non_existent_note_references(update_data)
         update_data = self._resolve_ingredient_sub_recipes(update_data)

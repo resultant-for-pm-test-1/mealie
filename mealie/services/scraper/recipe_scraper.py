@@ -7,6 +7,7 @@ from mealie.repos.repository_factory import AllRepositories
 from mealie.schema.recipe.recipe import RecipeDraft
 from mealie.services.scraper import cleaner
 from mealie.services.scraper.scraped_extras import ScrapedExtras
+from mealie.services.scraper.site_name import derive_site_name, strip_url_credentials
 
 from .scraper_strategies import (
     ABCScraperStrategy,
@@ -146,6 +147,8 @@ class RecipeScraper:
                 self.logger.exception(f"Failed to clean recipe data from {scraper.__class__.__name__}")
                 continue
 
+            recipe.site_name = derive_site_name(url)
+            recipe.org_url = strip_url_credentials(recipe.org_url)
             return recipe, extras
 
         return None, None
