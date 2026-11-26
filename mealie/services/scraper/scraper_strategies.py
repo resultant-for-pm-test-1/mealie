@@ -271,11 +271,12 @@ class RecipeScraperPackage(ABCScraperStrategy):
                 if not isinstance(note, dict):
                     continue
 
-                if text := note.get("text"):
+                # skip notes whose body is empty or whitespace-only once cleaned
+                if text := cleaner.clean_string(note.get("text", "")):
                     cleaned_notes.append(
                         RecipeNote(
                             title=cleaner.clean_string(note.get("title", "")),
-                            text=cleaner.clean_string(text),
+                            text=text,
                         )
                     )
 
