@@ -65,7 +65,7 @@ def test_html_with_recipe_data():
 
 
 def test_clean_scraper_preserves_notes():
-    """Regression test: notes must survive the RecipeScraperPackage pipeline (previously dropped silently)."""
+    """Preserve valid notes in order and skip notes with blank bodies."""
     ld_json = json.dumps(
         {
             "@context": "https://schema.org",
@@ -75,6 +75,7 @@ def test_clean_scraper_preserves_notes():
             "recipeInstructions": [{"@type": "HowToStep", "text": "Mix everything together"}],
             "notes": [
                 {"title": "Storage Tip", "text": "Keep refrigerated up to 3 days"},
+                {"title": "Empty Note", "text": " \t&nbsp;\n "},
                 {"title": "Variation", "text": "Add chili flakes for extra heat"},
             ],
         }
