@@ -94,6 +94,36 @@ def test_clean_scraper_preserves_notes():
     assert recipe.notes[1].text == "Add chili flakes for extra heat"
 
 
+def test_clean_scraper_skips_whitespace_only_notes():
+    """Notes whose body is whitespace-only after cleanup are dropped; valid notes keep their title, text and order."""
+    ld_json = json.dumps(
+        {
+            "@context": "https://schema.org",
+            "@type": "Recipe",
+            "name": "Test Recipe",
+            "recipeIngredient": ["1 cup flour"],
+            "recipeInstructions": [{"@type": "HowToStep", "text": "Mix everything together"}],
+            "notes": [
+                {"title": "Storage Tip", "text": "Keep refrigerated up to 3 days"},
+                {"title": "Empty", "text": " \t&nbsp;<br/>\n "},
+                {"title": "Variation", "text": "Add chili flakes for extra heat"},
+            ],
+        }
+    )
+    html = RecipeScraperPackage.ld_json_to_html(ld_json)
+    scraped = scrape_html(html, org_url="https://example.com", supported_only=False)
+    translator = get_locale_provider()
+    strategy = RecipeScraperPackage("https://example.com", translator, None)  # type: ignore[arg-type]
+
+    recipe, _ = strategy.clean_scraper(scraped, "https://example.com")
+
+    assert recipe.notes is not None
+    assert [(note.title, note.text) for note in recipe.notes] == [
+        ("Storage Tip", "Keep refrigerated up to 3 days"),
+        ("Variation", "Add chili flakes for extra heat"),
+    ]
+
+
 def test_cleaner_clean_structures_times():
     translator = get_locale_provider()
     recipe = cleaner.clean(
