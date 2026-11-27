@@ -64,8 +64,7 @@ def test_html_with_recipe_data():
     assert url_validation_regex.match(recipe_data["image"])
 
 
-def test_clean_scraper_preserves_notes():
-    """Regression test: notes must survive the RecipeScraperPackage pipeline (previously dropped silently)."""
+def test_clean_scraper_preserves_nonblank_notes():
     ld_json = json.dumps(
         {
             "@context": "https://schema.org",
@@ -75,6 +74,7 @@ def test_clean_scraper_preserves_notes():
             "recipeInstructions": [{"@type": "HowToStep", "text": "Mix everything together"}],
             "notes": [
                 {"title": "Storage Tip", "text": "Keep refrigerated up to 3 days"},
+                {"title": "Blank Note", "text": " \t\n "},
                 {"title": "Variation", "text": "Add chili flakes for extra heat"},
             ],
         }
@@ -85,6 +85,7 @@ def test_clean_scraper_preserves_notes():
     strategy = RecipeScraperPackage("https://example.com", translator, None)  # type: ignore[arg-type]
 
     recipe, _ = strategy.clean_scraper(scraped, "https://example.com")
+    recipe = cleaner.clean(recipe, translator)
 
     assert recipe.notes is not None
     assert len(recipe.notes) == 2
