@@ -94,6 +94,25 @@ def test_clean_scraper_preserves_notes():
     assert recipe.notes[1].text == "Add chili flakes for extra heat"
 
 
+def test_cleaner_skips_whitespace_only_notes():
+    recipe = cleaner.clean(
+        {
+            "name": "Test Recipe",
+            "notes": [
+                {"title": "Storage Tip", "text": "Keep refrigerated up to 3 days"},
+                {"title": "Empty Note", "text": " \t\n&nbsp;"},
+                {"title": "Variation", "text": "Add chili flakes for extra heat"},
+            ],
+        },
+        get_locale_provider(),
+    )
+
+    assert [(note.title, note.text) for note in recipe.notes or []] == [
+        ("Storage Tip", "Keep refrigerated up to 3 days"),
+        ("Variation", "Add chili flakes for extra heat"),
+    ]
+
+
 def test_cleaner_clean_structures_times():
     translator = get_locale_provider()
     recipe = cleaner.clean(
