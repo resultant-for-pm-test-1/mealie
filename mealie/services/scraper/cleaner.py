@@ -430,13 +430,13 @@ def clean_notes(notes: typing.Any) -> list[dict] | None:
             if "text" not in note:
                 continue
 
-            if "title" not in note:
-                note["title"] = ""
-
-            parsed_notes.append(note)
+            cleaned_note = note.copy()
+            cleaned_note["title"] = clean_string(cleaned_note.get("title", ""))
+            cleaned_note["text"] = clean_string(cleaned_note["text"])
+            parsed_notes.append(cleaned_note)
             continue
 
-        parsed_notes.append({"title": "", "text": note})
+        parsed_notes.append({"title": "", "text": clean_string(note)})
 
     return parsed_notes
 

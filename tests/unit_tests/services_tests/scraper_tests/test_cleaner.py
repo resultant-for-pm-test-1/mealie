@@ -1,6 +1,7 @@
 import json
 import re
 from pathlib import Path
+from uuid import UUID
 
 import pytest
 from recipe_scrapers import scrape_html
@@ -153,6 +154,30 @@ def test_cleaner_clean_keeps_instruction_links_and_durations():
     assert plain.ingredient_references == []
     assert plain.note_references == []
     assert plain.duration_seconds is None
+
+
+def test_cleaner_cleans_note_text_and_preserves_reference_links():
+    note_reference_id = "6ac1dff3-68e8-4823-a5a4-f0c05a89a900"
+    recipe = {
+        "name": "Test Recipe",
+        "notes": [{"title": "Tip", "text": "<p>  Rest   before serving. </p>", "referenceId": note_reference_id}],
+        "recipeInstructions": [
+            {"text": "Serve.", "noteReferences": [{"referenceId": note_reference_id}]},
+        ],
+    }
+
+    cleaned = cleaner.clean(recipe, get_locale_provider())
+
+    assert cleaned.notes and cleaned.notes[0].text == "Rest before serving."
+    assert cleaned.notes[0].reference_id == UUID(note_reference_id)
+    assert cleaned.recipe_instructions
+    assert cleaned.recipe_instructions[0].note_references[0].reference_id == UUID(note_reference_id)
+
+
+def test_cleaner_cleans_plain_text_notes():
+    cleaned = cleaner.clean({"name": "Test Recipe", "notes": ["<p>  Keep   chilled. </p>"]}, get_locale_provider())
+
+    assert cleaned.notes and [(note.title, note.text) for note in cleaned.notes] == [("", "Keep chilled.")]
 
 
 def test_clean_scraper_structures_times():
