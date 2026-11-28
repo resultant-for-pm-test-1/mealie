@@ -93,6 +93,24 @@ def test_recipes_without_sections_are_untouched():
     ]
 
 
+def test_plain_text_notes_are_cleaned_and_empty_notes_are_skipped():
+    recipe_data = dict(FLAT_RECIPE)
+    recipe_data["notes"] = [
+        "<p>  Plain&nbsp; text </p>",
+        {"title": " <b>Tip</b> ", "text": " <p>Keep   chilled</p> "},
+        " <br> ",
+        {"title": "No usable text", "text": "<p></p>"},
+        42,
+    ]
+
+    notes = scrape(recipe_data).notes
+
+    assert [(note.title, note.text) for note in notes] == [
+        ("", "Plain text"),
+        ("Tip", "Keep chilled"),
+    ]
+
+
 def test_single_step_section_is_imported():
     """A section holding one step as a bare dict, rather than a list, is a real shape.
 
