@@ -268,16 +268,17 @@ class RecipeScraperPackage(ABCScraperStrategy):
 
             cleaned_notes = []
             for note in notes_data:
-                if not isinstance(note, dict):
-                    continue
-
-                if text := note.get("text"):
-                    cleaned_notes.append(
-                        RecipeNote(
-                            title=cleaner.clean_string(note.get("title", "")),
-                            text=cleaner.clean_string(text),
+                if isinstance(note, str):
+                    if text := cleaner.clean_string(note):
+                        cleaned_notes.append(RecipeNote(title="", text=text))
+                elif isinstance(note, dict):
+                    if text := cleaner.clean_string(note.get("text", "")):
+                        cleaned_notes.append(
+                            RecipeNote(
+                                title=cleaner.clean_string(note.get("title", "")),
+                                text=text,
+                            )
                         )
-                    )
 
             return cleaned_notes
 
