@@ -1,3 +1,4 @@
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
@@ -1126,8 +1127,10 @@ clean_notes_test_cases = (
 
 @pytest.mark.parametrize("case", clean_notes_test_cases, ids=(x.test_id for x in clean_notes_test_cases))
 def test_cleaner_clean_notes(case: CleanerCase) -> None:
+    original_input = deepcopy(case.input)
     result = cleaner.clean_notes(case.input)
     assert case.expected == result
+    assert case.input == original_input
 
 
 @pytest.mark.parametrize(

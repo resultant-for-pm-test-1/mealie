@@ -15,3 +15,12 @@ def test_F1():
     scraped = scrape_html(RecipeScraperPackage.ld_json_to_html(data), org_url=url, supported_only=False)
     recipe, _ = strategy.clean_scraper(scraped, url)
     assert [(n.title, n.text) for n in recipe.notes] == [("", "Serve warm"), ("Store", "Keep cold")]
+
+def test_B1():
+    from mealie.services.scraper.cleaner import clean_notes
+
+    before = [{"text": "chill"}, "serve", {"title": "store", "text": "refrigerate"}, 14]
+    expected = [{"text": "chill"}, "serve", {"title": "store", "text": "refrigerate"}, 14]
+    assert clean_notes(before) == [{"title": "", "text": "chill"}, {"title": "", "text": "serve"},
+                                   {"title": "store", "text": "refrigerate"}]
+    assert before == expected
